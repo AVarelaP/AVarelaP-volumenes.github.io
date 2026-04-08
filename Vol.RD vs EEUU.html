@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Volúmenes República Dominicana vs EE.UU.</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+ 
+  body {
+    background: #FAF8F4;
+    font-family: 'Georgia', serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 32px;
+  }
+ 
+  .card {
+    background: #FAF8F4;
+    width: 100%;
+    max-width: 820px;
+  }
+ 
+  .chart-title {
+    font-family: 'Georgia', serif;
+    font-size: 17px;
+    font-weight: bold;
+    color: #1A1A1A;
+    margin-bottom: 4px;
+  }
+ 
+  .chart-sub {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 20px;
+    font-family: Arial, sans-serif;
+  }
+ 
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin-bottom: 20px;
+  }
+ 
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    color: #333;
+    transition: opacity 0.2s;
+    user-select: none;
+  }
+ 
+  .legend-item.faded { opacity: 0.35; }
+ 
+  .legend-line-wrap {
+    position: relative;
+    width: 32px;
+    height: 14px;
+    display: flex;
+    align-items: center;
+  }
+ 
+  .chart-wrap {
+    position: relative;
+    width: 100%;
+    height: 380px;
+  }
+ 
+  .custom-tooltip {
+    position: absolute;
+    background: #fff;
+    border: 1px solid #E0DAD0;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    color: #333;
+    pointer-events: none;
+    display: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    min-width: 180px;
+    z-index: 10;
+  }
+ 
+  .tooltip-month {
+    font-weight: bold;
+    font-size: 13px;
+    margin-bottom: 7px;
+    color: #111;
+  }
+ 
+  .tooltip-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 4px;
+  }
+ 
+  .tooltip-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+ 
+  .footer-note {
+    margin-top: 12px;
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    color: #aaa;
+  }
+ 
+  .anomaly-note {
+    margin-top: 10px;
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    color: #c0693a;
+    padding: 6px 10px;
+    border-left: 3px solid #d85a30;
+    background: #fff7f3;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="chart-title">Volúmenes Rep. Dominicana vs. Estados Unidos</div>
+  <div class="chart-sub">Gestiones mensuales · Enero–Diciembre </div>
+ 
+  <div class="legend" id="legend">
+    <div class="legend-item" data-index="0" onclick="toggleDataset(0)">
+      <div class="legend-line-wrap">
+        <svg width="32" height="14" viewBox="0 0 32 14">
+          <line x1="0" y1="7" x2="32" y2="7" stroke="#3266ad" stroke-width="2.5"/>
+          <circle cx="16" cy="7" r="4" fill="#3266ad" stroke="#FAF8F4" stroke-width="2"/>
+        </svg>
+      </div>
+      Rep. Dominicana
+    </div>
+    <div class="legend-item" data-index="1" onclick="toggleDataset(1)">
+      <div class="legend-line-wrap">
+        <svg width="32" height="14" viewBox="0 0 32 14">
+          <line x1="0" y1="7" x2="32" y2="7" stroke="#d85a30" stroke-width="2" stroke-dasharray="6,3"/>
+          <circle cx="16" cy="7" r="4" fill="#d85a30" stroke="#FAF8F4" stroke-width="2"/>
+        </svg>
+      </div>
+      Estados Unidos
+    </div>
+  </div>
+ 
+  <div class="chart-wrap">
+    <canvas id="myChart" role="img" aria-label="Gráfico de línea comparando volúmenes aduaneros mensuales de Rep. Dominicana y EE.UU. RD supera en 10 de 12 meses. EE.UU. cae abruptamente en agosto-septiembre.">
+      RD: 101,126,83,90,85,100,110,95,86,92,66,103. EE.UU.: 85,77,69,82,76,97,98,51,36,62,73,97.
+    </canvas>
+    <div class="custom-tooltip" id="tooltip"></div>
+  </div>
+ 
+  <div class="anomaly-note">⚠ EE.UU. cae un 63% entre julio y septiembre (98→36). Podría estar relacionado con la huelga portuaria de la ILA (oct. 2024) y el adelanto de importaciones previo al paro.</div>
+  <div class="footer-note">Haz clic en los países de la leyenda para mostrar/ocultar · Pasa el cursor sobre el gráfico para ver los valores</div>
+</div>
+ 
+<script>
+const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const mesesFull = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+ 
+const datasets = [
+  {
+    label: 'Rep. Dominicana',
+    data: [101,126,83,90,85,100,110,95,86,92,66,103],
+    borderColor: '#3266ad',
+    backgroundColor: 'rgba(50,102,173,0.07)',
+    borderWidth: 2.5,
+    pointRadius: 5,
+    pointHoverRadius: 7,
+    pointBackgroundColor: '#3266ad',
+    pointBorderColor: '#FAF8F4',
+    pointBorderWidth: 2,
+    tension: 0.35,
+    fill: false,
+    borderDash: []
+  },
+  {
+    label: 'Estados Unidos',
+    data: [85,77,69,82,76,97,98,51,36,62,73,97],
+    borderColor: '#d85a30',
+    backgroundColor: 'rgba(216,90,48,0.06)',
+    borderWidth: 2,
+    pointRadius: 5,
+    pointHoverRadius: 7,
+    pointBackgroundColor: '#d85a30',
+    pointBorderColor: '#FAF8F4',
+    pointBorderWidth: 2,
+    tension: 0.35,
+    fill: false,
+    borderDash: [7,4]
+  }
+];
+ 
+const ctx = document.getElementById('myChart').getContext('2d');
+const chart = new Chart(ctx, {
+  type: 'line',
+  data: { labels: meses, datasets },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: { enabled: false }
+    },
+    scales: {
+      x: {
+        ticks: {
+          font: { size: 13, family: 'Arial' },
+          color: '#666',
+          autoSkip: false,
+          maxRotation: 0
+        },
+        grid: { color: 'rgba(0,0,0,0)', drawBorder: false },
+        border: { display: false }
+      },
+      y: {
+        min: 20,
+        max: 140,
+        ticks: {
+          stepSize: 20,
+          font: { size: 12, family: 'Arial' },
+          color: '#666',
+          callback: v => v
+        },
+        grid: { color: 'rgba(0,0,0,0.06)', drawBorder: false },
+        border: { display: false }
+      }
+    },
+    onHover: (evt, elements) => {
+      const tooltip = document.getElementById('tooltip');
+      if (!elements.length) { tooltip.style.display = 'none'; return; }
+ 
+      const idx = elements[0].index;
+      const colors = ['#3266ad','#d85a30'];
+      const labels = ['Rep. Dominicana','Estados Unidos'];
+ 
+      let html = `<div class="tooltip-month">${mesesFull[idx]}</div>`;
+      chart.data.datasets.forEach((ds, i) => {
+        if (!chart.isDatasetVisible(i)) return;
+        const val = ds.data[idx];
+        const prev = idx > 0 ? ds.data[idx-1] : null;
+        const diff = prev !== null ? val - prev : null;
+        const diffStr = diff !== null ? (diff >= 0 ? `<span style="color:#2D7A45;font-size:10px;">▲${diff}</span>` : `<span style="color:#D85A30;font-size:10px;">▼${Math.abs(diff)}</span>`) : '';
+        html += `<div class="tooltip-row">
+          <div class="tooltip-dot" style="background:${colors[i]};"></div>
+          <span style="flex:1;">${labels[i]}</span>
+          <strong>${val}</strong>&nbsp;${diffStr}
+        </div>`;
+      });
+ 
+      tooltip.innerHTML = html;
+      tooltip.style.display = 'block';
+ 
+      const wrapRect = document.querySelector('.chart-wrap').getBoundingClientRect();
+      let x = evt.x - wrapRect.left + 14;
+      let y = evt.y - wrapRect.top - 20;
+      if (x + 190 > wrapRect.width) x = evt.x - wrapRect.left - 200;
+      if (y < 0) y = 8;
+      tooltip.style.left = x + 'px';
+      tooltip.style.top = y + 'px';
+    }
+  }
+});
+ 
+document.querySelector('.chart-wrap').addEventListener('mouseleave', () => {
+  document.getElementById('tooltip').style.display = 'none';
+});
+ 
+function toggleDataset(i) {
+  const meta = chart.getDatasetMeta(i);
+  meta.hidden = !meta.hidden;
+  chart.update();
+  document.querySelectorAll('.legend-item')[i].classList.toggle('faded', meta.hidden);
+}
+</script>
+</body>
+</html>
